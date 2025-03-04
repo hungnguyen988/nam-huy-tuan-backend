@@ -17,7 +17,7 @@ public class WebConfig implements WebMvcConfigurer {
    @Override
 public void addCorsMappings(org.springframework.web.servlet.config.annotation.CorsRegistry registry) {
     registry.addMapping("/**")
-           .allowedOrigins("http://localhost:3000","http://10.10.8.14:3000") // Thay đổi này thành URL chính xác của frontend
+           .allowedOrigins("http://localhost:3000","https://harmonious-consideration-production.up.railway.app") 
            .allowedMethods("GET", "POST", "PUT", "DELETE")
            .allowedHeaders("*")
            .exposedHeaders("Authorization","Content-Type")
