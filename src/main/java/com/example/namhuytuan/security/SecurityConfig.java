@@ -40,7 +40,7 @@ public class SecurityConfig {
                 }))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/register","/api/products","/api/products/{id}","/api/categories").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register","/api/products","/api/products/{id}","/api/categories","/api/auth/me").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
