@@ -45,7 +45,6 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginProcessingUrl("/api/auth/login")
-                        .defaultSuccessUrl("/api/auth/me", true)
                         .permitAll()
                 )
                 .logout(logout -> logout
