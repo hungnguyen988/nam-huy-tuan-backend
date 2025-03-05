@@ -1,10 +1,7 @@
 package com.example.namhuytuan.controller;
 
-import com.example.namhuytuan.dto.LoginDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -17,30 +14,16 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
-
-    public AuthController(AuthenticationManager authenticationManager) {
-        this.authenticationManager = authenticationManager;
-    }
-
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDTO loginDTO, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> login(Authentication authentication, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
 
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword())
-            );
-
-            // Lưu vào SecurityContext
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
+        if (authentication != null && authentication.isAuthenticated()) {
             response.put("message", "Đăng nhập thành công");
             response.put("user", authentication.getName());
             response.put("sessionId", session.getId());
             return ResponseEntity.ok(response); // HTTP 200
-
-        } catch (Exception e) {
+        } else {
             response.put("message", "Tên đăng nhập hoặc mật khẩu không đúng");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // HTTP 401
         }
@@ -60,4 +43,5 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // HTTP 401
         }
     }
+
 }
