@@ -1,51 +1,63 @@
 package com.example.namhuytuan.controller;
 
-import com.example.namhuytuan.model.user.User;
-import com.example.namhuytuan.repository.user.UserRepository;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.namhuytuan.dto.LoginDTO;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpSession;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class AuthController {
 
-    private final UserRepository userRepository;
+    private final AuthenticationManager authenticationManager;
 
-    private final PasswordEncoder passwordEncoder ;
+    public AuthController(AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
+    }
 
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDTO loginDTO, HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
 
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword())
+            );
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
-        Optional<User> existingUser = userRepository.findByUsername(user.getUsername());
-        if (existingUser.isPresent()) {
-            return ResponseEntity.badRequest().body("Username already exists!");
+            // Lưu vào SecurityContext
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            response.put("message", "Đăng nhập thành công");
+            response.put("user", authentication.getName());
+            response.put("sessionId", session.getId());
+            return ResponseEntity.ok(response); // HTTP 200
+
+        } catch (Exception e) {
+            response.put("message", "Tên đăng nhập hoặc mật khẩu không đúng");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // HTTP 401
         }
-
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userRepository.save(user);
-        return ResponseEntity.ok("User registered successfully!");
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session != null && session.getAttribute("SPRING_SECURITY_CONTEXT") != null) {
-            return ResponseEntity.ok("User is logged in!");
+    public ResponseEntity<Map<String, Object>> getCurrentUser(HttpSession session) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Map<String, Object> response = new HashMap<>();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            response.put("user", authentication.getName());
+            response.put("sessionId", session.getId());
+            return ResponseEntity.ok(response); // HTTP 200
+        } else {
+            response.put("message", "Chưa đăng nhập");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // HTTP 401
         }
-        return ResponseEntity.status(401).body("Unauthorized");
     }
-
-
 }
